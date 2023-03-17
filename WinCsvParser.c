@@ -74,6 +74,7 @@ int main () {
     }
 
     fread(buffer, 1, length, csvfile);
+    fclose(csvfile);
 
     SizedBuffer size_buffer = {0, length, buffer};
     Line* pointer_line = processCSV(&size_buffer);
@@ -95,6 +96,5 @@ int main () {
 
     FreeLibrary(ParserCSV);
     free(buffer);
-    fclose(csvfile);
     return 0;
 }

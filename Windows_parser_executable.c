@@ -1,4 +1,29 @@
+/*
+    Copyright (C) 2023  Maurice Lambert
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+// PEG expressions:
+//     Quote = "
+//     Value = (&Quote ([^"] / "")* &Quote / [^,\nEOF]*)
+//     Line = (Value ,)* Value [\nEOF]
+
+// Compile DLL/SharedLibrary:
+//     - Windows:  gcc parser_library.c -o Windows_CSV_Parser.exe -shared -O5
+//     - Linux:    gcc parser_library.c -shared -o Linux_CSV_Parser -O5
+
+#include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 typedef struct Value {
     unsigned int length;
@@ -172,4 +197,48 @@ extern Line* process(SizedBuffer* buffer) {
     }
 
     return first_line;
+}
+
+int main () {
+    FILE* csvfile = fopen("test.csv", "r");
+
+    if (NULL == csvfile) {
+        puts("File not found: test.csv");
+        return EXIT_FAILURE;
+    }
+
+    fseek(csvfile, 0, SEEK_END);
+    unsigned int length = ftell(csvfile) - 3;
+    fseek(csvfile, 0, SEEK_SET);
+    char* buffer = malloc(length);
+
+    if (NULL == buffer) {
+        fclose(csvfile);
+        puts("Memory error.");
+        return EXIT_FAILURE;
+    }
+
+    fread(buffer, 1, length, csvfile);
+    fclose(csvfile);
+
+    SizedBuffer size_buffer = {0, length, buffer};
+    Line* pointer_line = process(&size_buffer);
+
+    while (pointer_line != NULL) {
+        Value* value = pointer_line->value;
+        while (value != NULL) {
+            write(1, value->start, value->length);
+            putchar(',');
+            Value* old_value = value;
+            value = value->next;
+            free(old_value);
+        }
+        printf("\r\n");
+        Line* old_line = pointer_line;
+        pointer_line = pointer_line->next;
+        free(old_line);
+    }
+
+    free(buffer);
+    return 0;
 }
