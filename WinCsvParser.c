@@ -41,11 +41,11 @@ typedef struct SizedBuffer {
 typedef Line* (*FunctionProcessCSV)(SizedBuffer*);
 
 int main () {
-	HINSTANCE ParserCSV = LoadLibrary("Windows_CSV_Parser.dll");
+    HINSTANCE ParserCSV = LoadLibrary("Windows_CSV_Parser.dll");
 
-	if (NULL == ParserCSV)
+    if (NULL == ParserCSV)
     {
-    	puts("DLL not found: Windows_CSV_Parser.dll");
+        puts("DLL not found: Windows_CSV_Parser.dll");
         return EXIT_FAILURE;
     }
 
@@ -55,9 +55,9 @@ int main () {
         return EXIT_FAILURE;
     }
 
-	FILE* csvfile = fopen("test.csv", "r");
+    FILE* csvfile = fopen("test.csv", "r");
 
-	if (NULL == csvfile) {
+    if (NULL == csvfile) {
         puts("File not found: test.csv");
         return EXIT_FAILURE;
     }
@@ -68,8 +68,8 @@ int main () {
     char* buffer = malloc(length);
 
     if (NULL == buffer) {
-    	fclose(csvfile);
-    	puts("Memory error.");
+        fclose(csvfile);
+        puts("Memory error.");
         return EXIT_FAILURE;
     }
 
@@ -79,22 +79,22 @@ int main () {
     Line* pointer_line = processCSV(&size_buffer);
 
     while (pointer_line != NULL) {
-    	Value* value = pointer_line->value;
-    	while (value != NULL) {
-    		write(1, value->start, value->length);
-    		putchar(',');
-    		Value* old_value = value;
-    		value = value->next;
-    		free(old_value);
-    	}
-    	printf("\r\n");
-    	Line* old_line = pointer_line;
-    	pointer_line = pointer_line->next;
-    	free(old_line);
+        Value* value = pointer_line->value;
+        while (value != NULL) {
+            write(1, value->start, value->length);
+            putchar(',');
+            Value* old_value = value;
+            value = value->next;
+            free(old_value);
+        }
+        printf("\r\n");
+        Line* old_line = pointer_line;
+        pointer_line = pointer_line->next;
+        free(old_line);
     }
 
     FreeLibrary(ParserCSV);
     free(buffer);
-	fclose(csvfile);
-	return 0;
+    fclose(csvfile);
+    return 0;
 }
