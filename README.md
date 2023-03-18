@@ -56,7 +56,7 @@ gcc LinuxCsvParser.c -o LinuxParserCSV.exe -O5
 ### Python
 
 ```python
-from ctypes import Structure, c_uint, c_char_p, CDLL, POINTER, addressof
+from ctypes import Structure, c_uint, c_char_p, CDLL, POINTER
 from os import name as os_name
 
 class Value(Structure):
