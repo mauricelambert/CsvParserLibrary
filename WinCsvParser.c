@@ -12,7 +12,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// gcc WinCsvParser.c -o ParserCSV.exe -O5
+// gcc WinCsvParser.c -o WindowsParserCSV.exe -O5
 
 #include <windows.h>
 #include <winbase.h>
@@ -25,6 +25,7 @@ typedef struct Value {
     unsigned int length;
     char* start;
     struct Value* next;
+    unsigned int to_free;
 } Value;
 
 typedef struct Line {
@@ -45,20 +46,20 @@ int main () {
 
     if (NULL == ParserCSV)
     {
-        puts("DLL not found: Windows_CSV_Parser.dll");
+        fputs("DLL not found: Windows_CSV_Parser.dll", stderr);
         return EXIT_FAILURE;
     }
 
     FunctionProcessCSV processCSV = (FunctionProcessCSV)GetProcAddress(ParserCSV, "process");
     if (NULL == processCSV) {
-        puts("DLL Function not found: process");
+        fputs("DLL Function not found: process", stderr);
         return EXIT_FAILURE;
     }
 
     FILE* csvfile = fopen("test.csv", "r");
 
     if (NULL == csvfile) {
-        puts("File not found: test.csv");
+        fputs("File not found: test.csv", stderr);
         return EXIT_FAILURE;
     }
 
@@ -69,7 +70,7 @@ int main () {
 
     if (NULL == buffer) {
         fclose(csvfile);
-        puts("Memory error.");
+        fputs("Memory error.", stderr);
         return EXIT_FAILURE;
     }
 
@@ -86,6 +87,9 @@ int main () {
             putchar(',');
             Value* old_value = value;
             value = value->next;
+            if (old_value->to_free) {
+                free(old_value->start);
+            }
             free(old_value);
         }
         printf("\r\n");

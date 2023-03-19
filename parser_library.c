@@ -1,9 +1,24 @@
+/*
+    Copyright (C) 2023  Maurice Lambert
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include <stdlib.h>
 
 typedef struct Value {
     unsigned int length;
     char* start;
     struct Value* next;
+    unsigned int to_free;
 } Value;
 
 typedef struct Line {
@@ -31,6 +46,7 @@ void remove_double_quote(Value* value, unsigned int counter) {
     }
 
     value->start = value_string;
+    value->to_free = 1;
 }
 
 int is_character (SizedBuffer* buffer, char character) {
@@ -110,6 +126,7 @@ int get_quoted_value(SizedBuffer* buffer, Value* value) {
 Line* new_line(Line* pointer_line) {
     Value* value = malloc(sizeof(Value));
     value->length = 0;
+    value->to_free = 0;
     value->next = NULL;
     Line* line = malloc(sizeof(Line));
     line->value = value;
@@ -121,6 +138,7 @@ Line* new_line(Line* pointer_line) {
 Value* new_value(Value* pointer_value) {
     Value* value = malloc(sizeof(Value));
     value->length = 0;
+    value->to_free = 0;
     value->next = NULL;
     pointer_value->next = value;
     return value;
@@ -130,6 +148,7 @@ extern Line* process(SizedBuffer* buffer) {
     Line* first_line = malloc(sizeof(Line));
     Value* pointer_value = malloc(sizeof(Value));
     pointer_value->length = 0;
+    pointer_value->to_free = 0;
     pointer_value->next = NULL;
     first_line->value = pointer_value;
     Line* pointer_line = first_line;

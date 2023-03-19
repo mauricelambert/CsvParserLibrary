@@ -12,7 +12,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// gcc LinuxCsvParser.c -o LinuxParserCSV.exe -O5
+// gcc LinuxCsvParser.c -o LinuxParserCSV -O5
 
 
 #include <unistd.h>
@@ -24,6 +24,7 @@ typedef struct Value {
     unsigned int length;
     char* start;
     struct Value* next;
+    unsigned int to_free;
 } Value;
 
 typedef struct Line {
@@ -40,7 +41,7 @@ typedef struct SizedBuffer {
 int main() {
     void *ParserCSV = dlopen("./Linux_CSV_Parser.so", RTLD_LAZY);
     if (NULL == ParserCSV) {
-        puts("Shared library not found: ./Linux_CSV_Parser.so");
+        fputs("Shared library not found: ./Linux_CSV_Parser.so", stderr);
         return EXIT_FAILURE;
     }
     dlerror();
@@ -49,14 +50,14 @@ int main() {
     char* error = dlerror();
 
     if (NULL != error) {
-        puts("DLL Function not found: process");
+        fputs("DLL Function not found: process", stderr);
         return EXIT_FAILURE;
     }
 
     FILE* csvfile = fopen("test.csv", "r");
 
     if (NULL == csvfile) {
-        puts("File not found: test.csv");
+        fputs("File not found: test.csv", stderr);
         return EXIT_FAILURE;
     }
 
@@ -67,7 +68,7 @@ int main() {
 
     if (NULL == buffer) {
         fclose(csvfile);
-        puts("Memory error.");
+        fputs("Memory error.", stderr);
         return EXIT_FAILURE;
     }
 
@@ -85,9 +86,12 @@ int main() {
             fflush(stdout);
             Value* old_value = value;
             value = value->next;
+            if (old_value->to_free) {
+                free(old_value->start);
+            }
             free(old_value);
         }
-        printf("\n");
+        puts("");
         Line* old_line = pointer_line;
         pointer_line = pointer_line->next;
         free(old_line);

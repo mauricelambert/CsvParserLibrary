@@ -10,7 +10,7 @@ This repository is a multi-platform library (Shared Object (.so) for Linux and D
 
 ## Download
 
-[Download binaries (Linux and Windows Libraries and examples) from latest github release](https://github.com/mauricelambert/CsvParserLibrary/releases/latest).
+(Download binaries (Linux and Windows Libraries and examples) from latest github release)[https://github.com/mauricelambert/CsvParserLibrary/releases/latest].
 
 ## Compile
 
@@ -47,8 +47,8 @@ WindowsParserCSV.exe
 ##### Linux
 
 ```bash
-gcc LinuxCsvParser.c -o LinuxParserCSV.exe -O5
-./LinuxParserCSV.exe
+gcc LinuxCsvParser.c -o LinuxParserCSV -O5
+./LinuxParserCSV
 ```
 
 ## Usages
@@ -56,7 +56,7 @@ gcc LinuxCsvParser.c -o LinuxParserCSV.exe -O5
 ### Python
 
 ```python
-from ctypes import Structure, c_uint, c_char_p, CDLL, POINTER
+from ctypes import Structure, c_uint, c_char_p, CDLL, POINTER, addressof
 from os import name as os_name
 
 class Value(Structure):
@@ -101,6 +101,8 @@ while bool(line):
 #### Windows
 
 ```c
+// gcc Windows_example.c -o Windows_example.exe -O5
+
 #include <windows.h>
 #include <winbase.h>
 #include <windef.h>
@@ -112,6 +114,7 @@ typedef struct Value {
     unsigned int length;
     char* start;
     struct Value* next;
+    unsigned int to_free;
 } Value;
 
 typedef struct Line {
@@ -132,13 +135,13 @@ int main () {
 
     if (NULL == ParserCSV)
     {
-        puts("DLL not found: Windows_CSV_Parser.dll");
+        fputs("DLL not found: Windows_CSV_Parser.dll", stderr);
         return EXIT_FAILURE;
     }
 
     FunctionProcessCSV processCSV = (FunctionProcessCSV)GetProcAddress(ParserCSV, "process");
     if (NULL == processCSV) {
-        puts("DLL Function not found: process");
+        fputs("DLL Function not found: process", stderr);
         return EXIT_FAILURE;
     }
 
@@ -152,6 +155,9 @@ int main () {
             putchar(',');
             Value* old_value = value;
             value = value->next;
+            if (old_value->to_free) {
+                free(old_value->start);
+            }
             free(old_value);
         }
         puts("");
@@ -168,6 +174,8 @@ int main () {
 #### Linux
 
 ```c
+// gcc Linux_example.c -o Linux_example -O5
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -177,6 +185,7 @@ typedef struct Value {
     unsigned int length;
     char* start;
     struct Value* next;
+    unsigned int to_free;
 } Value;
 
 typedef struct Line {
@@ -193,7 +202,7 @@ typedef struct SizedBuffer {
 int main() {
     void *ParserCSV = dlopen("./Linux_CSV_Parser.so", RTLD_LAZY);
     if (NULL == ParserCSV) {
-        puts("Shared library not found: ./Linux_CSV_Parser.so");
+        fputs("Shared library not found: ./Linux_CSV_Parser.so", stderr);
         return EXIT_FAILURE;
     }
     dlerror();
@@ -202,7 +211,7 @@ int main() {
     char* error = dlerror();
 
     if (NULL != error) {
-        puts("DLL Function not found: process");
+        fputs("DLL Function not found: process", stderr);
         return EXIT_FAILURE;
     }
 
@@ -217,9 +226,12 @@ int main() {
             fflush(stdout);
             Value* old_value = value;
             value = value->next;
+            if (old_value->to_free) {
+                free(old_value->start);
+            }
             free(old_value);
         }
-        printf("\n");
+        puts("");
         Line* old_line = pointer_line;
         pointer_line = pointer_line->next;
         free(old_line);

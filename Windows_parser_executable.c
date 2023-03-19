@@ -18,8 +18,8 @@
 //     Line = (Value ,)* Value [\nEOF]
 
 // Compile DLL/SharedLibrary:
-//     - Windows:  gcc parser_library.c -o Windows_CSV_Parser.exe -shared -O5
-//     - Linux:    gcc parser_library.c -shared -o Linux_CSV_Parser -O5
+//     - Windows:  gcc parser_library.c -o Windows_CSV_Parser.dll -shared -O5
+//     - Linux:    gcc parser_library.c -shared -o Linux_CSV_Parser.so -O5
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +29,7 @@ typedef struct Value {
     unsigned int length;
     char* start;
     struct Value* next;
+    unsigned int to_free;
 } Value;
 
 typedef struct Line {
@@ -56,6 +57,7 @@ void remove_double_quote(Value* value, unsigned int counter) {
     }
 
     value->start = value_string;
+    value->to_free = 1;
 }
 
 int is_character (SizedBuffer* buffer, char character) {
@@ -135,6 +137,7 @@ int get_quoted_value(SizedBuffer* buffer, Value* value) {
 Line* new_line(Line* pointer_line) {
     Value* value = malloc(sizeof(Value));
     value->length = 0;
+    value->to_free = 0;
     value->next = NULL;
     Line* line = malloc(sizeof(Line));
     line->value = value;
@@ -146,6 +149,7 @@ Line* new_line(Line* pointer_line) {
 Value* new_value(Value* pointer_value) {
     Value* value = malloc(sizeof(Value));
     value->length = 0;
+    value->to_free = 0;
     value->next = NULL;
     pointer_value->next = value;
     return value;
@@ -155,6 +159,7 @@ extern Line* process(SizedBuffer* buffer) {
     Line* first_line = malloc(sizeof(Line));
     Value* pointer_value = malloc(sizeof(Value));
     pointer_value->length = 0;
+    pointer_value->to_free = 0;
     pointer_value->next = NULL;
     first_line->value = pointer_value;
     Line* pointer_line = first_line;
@@ -203,7 +208,7 @@ int main () {
     FILE* csvfile = fopen("test.csv", "r");
 
     if (NULL == csvfile) {
-        puts("File not found: test.csv");
+        fputs("File not found: test.csv", stderr);
         return EXIT_FAILURE;
     }
 
@@ -214,7 +219,7 @@ int main () {
 
     if (NULL == buffer) {
         fclose(csvfile);
-        puts("Memory error.");
+        fputs("Memory error.", stderr);
         return EXIT_FAILURE;
     }
 
@@ -231,6 +236,9 @@ int main () {
             putchar(',');
             Value* old_value = value;
             value = value->next;
+            if (old_value->to_free) {
+                free(old_value->start);
+            }
             free(old_value);
         }
         printf("\r\n");
