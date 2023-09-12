@@ -10,7 +10,7 @@ This repository is a multi-platform library (Shared Object (.so) for Linux and D
 
 ## Download
 
-(Download binaries (Linux and Windows Libraries and examples) from latest github release)[https://github.com/mauricelambert/CsvParserLibrary/releases/latest].
+[Download binaries (Linux and Windows Libraries and examples) from latest github release](https://github.com/mauricelambert/CsvParserLibrary/releases/latest).
 
 ## Compile
 
